@@ -1,0 +1,43 @@
+{
+  "runtimeModule": true,
+  "group": "de.garrus.cloudnet",
+  "name": "Cloudnet-Postgres-Database-Provider",
+  "version": "1.0",
+  "author": "garrus.de",
+  "website": "https://garrus.de",
+  "description": "CloudNet extension, which includes the database support for PostgreSQL database to store",
+  "main": "de.garrus.cloudnet.database.postgres.provider.CloudNetPostgresDatabaseModule",
+  "storesSensitiveData": true,
+  "dependencies": [
+    {
+      "group": "org.postgresql",
+      "name": "postgresql",
+      "version": "42.2.12",
+      "repo": "maven"
+    },
+    {
+      "group": "com.zaxxer",
+      "name": "HikariCP",
+      "version": "3.4.2",
+      "repo": "maven"
+    },
+    {
+      "group": "org.javassist",
+      "name": "javassist",
+      "version": "3.27.0-GA",
+      "repo": "maven"
+    },
+    {
+      "group": "org.slf4j",
+      "name": "slf4j-api",
+      "version": "1.7.25",
+      "repo": "maven"
+    },
+    {
+      "group": "org.slf4j",
+      "name": "slf4j-nop",
+      "version": "1.7.25",
+      "repo": "maven"
+    }
+  ]
+}
