@@ -6,8 +6,8 @@ import de.dytanic.cloudnet.common.collection.NetorHashMap;
 import de.dytanic.cloudnet.common.collection.Pair;
 import de.dytanic.cloudnet.common.concurrent.IThrowableCallback;
 import de.dytanic.cloudnet.common.document.gson.JsonDocument;
-import de.dytanic.cloudnet.database.IDatabase;
 import de.dytanic.cloudnet.database.sql.SQLDatabaseProvider;
+import de.dytanic.cloudnet.driver.database.Database;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -21,21 +21,21 @@ import java.util.concurrent.ExecutorService;
 
 public class PostgresSQLDatabaseProvider extends SQLDatabaseProvider {
     private static final long NEW_CREATION_DELAY = 600000L;
-    protected final NetorHashMap<String, Long, IDatabase> cachedDatabaseInstances = new NetorHashMap<>();
+    protected final NetorHashMap<String, Long, Database> cachedDatabaseInstances = new NetorHashMap<>();
     protected final HikariDataSource hikariDataSource = new HikariDataSource();
     private final JsonDocument config;
     private String address;
 
-    public PostgresSQLDatabaseProvider(JsonDocument config,ExecutorService executorService) {
+    public PostgresSQLDatabaseProvider(JsonDocument config, ExecutorService executorService) {
         super(executorService);
         this.config = config;
     }
 
     public boolean init() {
         this.address = this.config.getString("addresse");
-        this.hikariDataSource.setJdbcUrl(address);
-        this.hikariDataSource.setUsername(this.config.getString("username"));
-        this.hikariDataSource.setPassword(this.config.getString("password"));
+        this.hikariDataSource.setJdbcUrl(System.getenv("CLOUDNET_JDBC_URL") != null ? System.getenv("CLOUDNET_JDBC_URL") : address);
+        this.hikariDataSource.setUsername(System.getenv("CLOUDNET_JDBC_USER") != null ? System.getenv("CLOUDNET_JDBC_USER") : this.config.getString("username"));
+        this.hikariDataSource.setPassword(System.getenv("CLOUDNET_JDBC_PASSWORD") != null ? System.getenv("CLOUDNET_JDBC_PASSWORD") : this.config.getString("password"));
         this.hikariDataSource.setDriverClassName("org.postgresql.Driver");
         this.hikariDataSource.setMaximumPoolSize(this.config.getInt("connectionPoolSize"));
         this.hikariDataSource.setConnectionTimeout(this.config.getInt("connectionTimeout"));
@@ -44,12 +44,11 @@ public class PostgresSQLDatabaseProvider extends SQLDatabaseProvider {
         return true;
     }
 
-    public IDatabase getDatabase(String name) {
+    public Database getDatabase(String name) {
         Preconditions.checkNotNull(name);
         this.removedOutdatedEntries();
         if (!this.cachedDatabaseInstances.contains(name)) {
-            this.cachedDatabaseInstances.add(name, System.currentTimeMillis() + NEW_CREATION_DELAY, new PostgresDatabase(this, name,super.executorService) {
-            });
+            this.cachedDatabaseInstances.add(name, System.currentTimeMillis() + NEW_CREATION_DELAY, new PostgresDatabase(this, name, super.executorService));
         }
 
         return this.cachedDatabaseInstances.getSecond(name);
@@ -110,11 +109,11 @@ public class PostgresSQLDatabaseProvider extends SQLDatabaseProvider {
         this.hikariDataSource.close();
     }
 
-    private void removedOutdatedEntries() {
-        Iterator<Map.Entry<String, Pair<Long, IDatabase>>> var1 = this.cachedDatabaseInstances.entrySet().iterator();
+    protected void removedOutdatedEntries() {
+        Iterator<Map.Entry<String, Pair<Long, Database>>> var1 = this.cachedDatabaseInstances.entrySet().iterator();
 
         while (var1.hasNext()) {
-            Map.Entry<String, Pair<Long, IDatabase>> entry = var1.next();
+            Map.Entry<String, Pair<Long, Database>> entry = var1.next();
             if ((Long) ((Pair) entry.getValue()).getFirst() < System.currentTimeMillis()) {
                 this.cachedDatabaseInstances.remove(entry.getKey());
             }
@@ -126,7 +125,7 @@ public class PostgresSQLDatabaseProvider extends SQLDatabaseProvider {
         return this.hikariDataSource.getConnection();
     }
 
-    public NetorHashMap<String, Long, IDatabase> getCachedDatabaseInstances() {
+    public NetorHashMap<String, Long, Database> getCachedDatabaseInstances() {
         return this.cachedDatabaseInstances;
     }
 
@@ -148,7 +147,7 @@ public class PostgresSQLDatabaseProvider extends SQLDatabaseProvider {
 
         try {
             Connection connection = getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(query);
+            PreparedStatement preparedStatement = connection.prepareStatement(query.replace("`","'").replace("'",""));
 
             for (int i = 0; i < objects.length; i++) {
                 preparedStatement.setString(i + 1, objects[i].toString());
@@ -177,7 +176,7 @@ public class PostgresSQLDatabaseProvider extends SQLDatabaseProvider {
 
         try {
             Connection connection = getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(query);
+            PreparedStatement preparedStatement = connection.prepareStatement(query.replace("`","").replace("'",""));
 
             for (int i = 0; i < objects.length; i++) {
                 preparedStatement.setString(i + 1, objects[i].toString());

@@ -9,4 +9,9 @@ public class PostgresDatabase extends SQLDatabase {
     public PostgresDatabase(SQLDatabaseProvider databaseProvider, String name, ExecutorService executorService) {
         super(databaseProvider, name, executorService);
     }
+
+    @Override
+    public boolean isSynced() {
+        return false;
+    }
 }
