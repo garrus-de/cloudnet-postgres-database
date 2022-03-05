@@ -147,7 +147,7 @@ public class PostgresSQLDatabaseProvider extends SQLDatabaseProvider {
 
         try {
             Connection connection = getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(query.replace("`","'").replace("'",""));
+            PreparedStatement preparedStatement = connection.prepareStatement(query.replace("`", "'").replace("'", ""));
 
             for (int i = 0; i < objects.length; i++) {
                 preparedStatement.setString(i + 1, objects[i].toString());
@@ -176,7 +176,7 @@ public class PostgresSQLDatabaseProvider extends SQLDatabaseProvider {
 
         try {
             Connection connection = getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(query.replace("`","").replace("'",""));
+            PreparedStatement preparedStatement = connection.prepareStatement(query.replace("`", "").replace("'", ""));
 
             for (int i = 0; i < objects.length; i++) {
                 preparedStatement.setString(i + 1, objects[i].toString());
